@@ -1,7 +1,7 @@
 import { useAccount, useNetwork } from "wagmi";
 import { useState, useEffect } from "react";
-import CheckState from "./CheckState";
-import OpenBets from "./OpenBets";
+import CheckState from "./CheckState_gonza";
+import OpenBets from "./OpenBets_gonza";
 import BuyTokens from "./BuyTokens";
 import TokenBalance from "./TokenBalance";
 import Bet from "./Bet";
@@ -12,12 +12,10 @@ import Pool from "./Pool";
 import Withdraw from "./Withdraw";
 import Burn from "./Burn";
 
-
 export default function PageBody() {
-
   return (
     <>
-      <CheckState ></CheckState>
+      <CheckState></CheckState>
       <OpenBets></OpenBets>
       <BuyTokens></BuyTokens>
       <TokenBalance></TokenBalance>

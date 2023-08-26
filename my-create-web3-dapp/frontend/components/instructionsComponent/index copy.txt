@@ -1,4 +1,3 @@
-import React from "react";
 import CheckState from "./checkState";
 import TopUpAccountTokens from "./topUpAccountTokens";
 import BetWithAccount from "./betWithAccount";
@@ -8,28 +7,32 @@ import BurnTokens from "./burnTokens";
 import OpenBets from "./openBets";
 import CloseBets from "./closeBets";
 
+import VoteComponent from "./voteComponent";
+import QueryComponent from "./queryComponent";
+import DelegateComponent from "./delegateComponent";
+import MintTokensForm from "./mintTokens";
+import VotesTable from "./VotesTable";
+import SaveVote from "./saveVote";
+import OracleComponent from "./oracleComponent";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
-import Divider from "@mui/material/Divider";
 
 export default function InstructionsComponent() {
   return (
     <Container component="main" maxWidth="lg">
-      <Box textAlign="center" marginBottom={3}>
-        <Typography variant="h2">Lottery</Typography>
-      </Box>
       <Paper elevation={3} style={{ padding: "24px" }}>
-        <Box textAlign="center">
+        <Typography variant="h4" gutterBottom>
+          Lottery
+        </Typography>
+
+        <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
             <CheckState />
           </Grid>
-        </Box>
-        <Divider variant="middle" style={{ marginBottom: "20px" }} />
 
-        <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
             <TopUpAccountTokens />
           </Grid>
@@ -37,25 +40,19 @@ export default function InstructionsComponent() {
           <Grid item xs={12} md={6}>
             <BetWithAccount />
           </Grid>
-        </Grid>
-        <Divider variant="middle" style={{ margin: "20px 0" }} />
 
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={6}>
             <CheckPlayerPrize />
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={6}>
             <Withdraw />
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={6}>
             <BurnTokens />
           </Grid>
-        </Grid>
-        <Divider variant="middle" style={{ margin: "20px 0" }} />
 
-        <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
             <OpenBets />
           </Grid>
