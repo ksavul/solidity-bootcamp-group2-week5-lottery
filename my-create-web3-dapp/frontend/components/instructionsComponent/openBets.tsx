@@ -1,19 +1,31 @@
 import React, { useState } from "react";
+import axios from "axios";
 import { Button, TextField, Typography, Box } from "@mui/material";
 
 function OpenBets() {
   const [duration, setDuration] = useState<number | string>("");
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
-  const [showTextBox, setShowTextBox] = useState<boolean>(false); // New state to control visibility
+  const [error, setError] = useState<string | null>(null); // New state for error message
+  const [showTextBox, setShowTextBox] = useState<boolean>(false);
 
   const handleOpenBets = async () => {
-    // Simulate an API call to open bets
-    // Replace with actual API call
-    setTransactionHash(`0x123ABC${Math.floor(Math.random() * 1000)}`);
+    try {
+      const response = await axios.post("http://localhost:3001/open-bets");
+
+      if (response.data.success) {
+        setTransactionHash(response.data.txHash);
+        setError(null); // Clear any previous error
+      } else {
+        // Handle the case where the backend response indicates an error
+        setError(response.data.error);
+      }
+    } catch (error) {
+      console.error("Error opening bets:", error);
+      setError("An error occurred while opening bets.");
+    }
   };
 
   const toggleTextBox = () => {
-    // Function to toggle text box visibility
     setShowTextBox(!showTextBox);
   };
 
@@ -27,12 +39,10 @@ function OpenBets() {
     >
       <Typography variant="h4">Open Bets</Typography>
 
-      {/* Button to show/hide text box */}
       <Button variant="contained" color="primary" onClick={toggleTextBox}>
         Open Bets
       </Button>
 
-      {/* Conditionally render the text box and Enter button */}
       {showTextBox && (
         <>
           <TextField
@@ -41,7 +51,9 @@ function OpenBets() {
             variant="outlined"
             type="number"
             value={duration}
-            onChange={(e) => setDuration(e.target.value)}
+            onChange={(e: {
+              target: { value: React.SetStateAction<string | number> };
+            }) => setDuration(e.target.value)}
           />
 
           <Button variant="contained" color="primary" onClick={handleOpenBets}>
@@ -55,6 +67,12 @@ function OpenBets() {
       {transactionHash && (
         <Typography variant="h6">
           Transaction Hash: {transactionHash}
+        </Typography>
+      )}
+
+      {error && (
+        <Typography variant="h6" style={{ color: "red" }}>
+          Error: {error}
         </Typography>
       )}
     </Box>

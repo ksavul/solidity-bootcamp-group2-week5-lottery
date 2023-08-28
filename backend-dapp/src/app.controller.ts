@@ -6,7 +6,6 @@ import { BuyTokensDTO } from './dto/buyTokens.dto';
 import { BetDTO } from './dto/bet.dto';
 import { WithdrawDTO } from './dto/withdraw.dto';
 
-
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
@@ -42,7 +41,7 @@ export class AppController {
   }
 
   @Get('check-eth-balance')
-  checkEthBalance(@Param('index') index:number): Promise<string> {
+  checkEthBalance(@Param('index') index: number): Promise<string> {
     return this.appService.checkEthBalance(index);
   }
 
@@ -52,7 +51,7 @@ export class AppController {
   }
 
   @Get('check-token-balance')
-  checkTokenBalance(@Param('index') index:number): Promise<string> {
+  checkTokenBalance(@Param('index') index: number): Promise<string> {
     return this.appService.checkTokenBalance(index);
   }
 
@@ -62,30 +61,40 @@ export class AppController {
   }
 
   @Post('close-bets')
-  closeBets(): Promise<boolean> {
-    return this.appService.closeBets();
+  async closeBetsEndpoint(): Promise<any> {
+    try {
+      const result = await this.appService.closeBets();
+      return result;
+    } catch (error) {
+      // Handle the error here
+      console.error('An error occurred in closeBetsEndpoint:', error);
+
+      // Extract the "Already closed" part from the error message
+      const errorMessage = error.message || '';
+      const match = errorMessage.match(/"([^"]+)"/);
+      const specificError = match ? match[1] : 'Unknown error';
+
+      return { success: false, error: specificError };
+    }
   }
 
   @Get('check-player-prize')
-  checkPlayerPrize(@Param('index') index:number): Promise<bigint> {
+  checkPlayerPrize(@Param('index') index: number): Promise<bigint> {
     return this.appService.checkPlayerPrize(index);
   }
 
   @Post('claim-prize')
-  claimPrize(@Param('index') index:number): Promise<any> {
+  claimPrize(@Param('index') index: number): Promise<any> {
     return this.appService.claimPrize(index);
-  } 
+  }
 
   @Post('withdraw')
   withdraw(@Body() body: WithdrawDTO): Promise<any> {
     return this.appService.withdraw(body.amount);
-  } 
-
-  @Post('burn-tokens')
-  burnTokens(@Body() body: BuyTokensDTO): Promise<any>{
-    return this.appService.burnTokens(body.index,BigInt( body.amount))
   }
 
-
-
+  @Post('burn-tokens')
+  burnTokens(@Body() body: BuyTokensDTO): Promise<any> {
+    return this.appService.burnTokens(body.index, BigInt(body.amount));
+  }
 }

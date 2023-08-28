@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios";
 import {
   Button,
   TextField,
@@ -10,23 +11,36 @@ import {
 
 function CheckPlayerPrize() {
   const [accountIndex, setAccountIndex] = useState<number | null>(null);
-  const [accountAddress, setAccountAddress] = useState<string | null>(null);
-  const [prizeTokens, setPrizeTokens] = useState<number | null>(null);
-  const [claimDecision, setClaimDecision] = useState<string | null>(null);
   const [prizeMessage, setPrizeMessage] = useState<string | null>(null);
+  const [claimDecision, setClaimDecision] = useState<string | null>(""); // Initialize with an empty string
 
   const handleAccountInput = async () => {
-    // Simulate API call to get account address and prize tokens based on account index
-    // Replace with actual API call
-    setAccountAddress(`0x123${accountIndex}`);
-    setPrizeTokens(Math.random() * 1000);
+    try {
+      const response = await axios.get(
+        `http://localhost:3001/check-player-prize?accountIndex=${accountIndex}`
+      );
+
+      if (response.data === 0) {
+        setPrizeMessage("Player prize: 0");
+      } else {
+        setPrizeMessage(`Player prize: ${response.data}`);
+      }
+    } catch (error) {
+      console.error("Error fetching player prize:", error);
+    }
   };
 
   const handleClaimDecision = async () => {
-    if (claimDecision === "Yes") {
-      setPrizeMessage("Prize claimed");
-    } else {
-      setPrizeMessage("Prize not claimed");
+    try {
+      const response = await axios.post("http://localhost:3001/claim-prize");
+
+      if (response.data.success) {
+        setPrizeMessage("Prize claimed");
+      } else {
+        setPrizeMessage("Failed to claim prize");
+      }
+    } catch (error) {
+      console.error("Error claiming prize:", error);
     }
   };
 
@@ -51,36 +65,22 @@ function CheckPlayerPrize() {
         Enter
       </Button>
 
-      {accountAddress && prizeTokens !== null && (
-        <Typography variant="h6">
-          The account of address {accountAddress} has earned a prize of{" "}
-          {prizeTokens} Tokens
-        </Typography>
-      )}
-
-      {prizeTokens !== null && (
-        <>
-          <Typography variant="h6">Do you want to claim your prize?</Typography>
-          <Select
-            fullWidth
-            value={claimDecision || ""}
-            onChange={(e) => setClaimDecision(e.target.value as string)}
-            variant="outlined"
-          >
-            <MenuItem value="Yes">Yes</MenuItem>
-            <MenuItem value="No">No</MenuItem>
-          </Select>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleClaimDecision}
-          >
-            Enter
-          </Button>
-        </>
-      )}
-
       {prizeMessage && <Typography variant="h6">{prizeMessage}</Typography>}
+
+      {/* Render the "Claim Prize" section with value and onChange */}
+      <Typography variant="h6">Do you want to claim your prize?</Typography>
+      <Select
+        fullWidth
+        value={claimDecision} // Set the selected value
+        variant="outlined"
+        onChange={(e) => setClaimDecision(e.target.value as string)} // Update selected value
+      >
+        <MenuItem value="Yes">Yes</MenuItem>
+        <MenuItem value="No">No</MenuItem>
+      </Select>
+      <Button variant="contained" color="primary" onClick={handleClaimDecision}>
+        Enter
+      </Button>
     </Box>
   );
 }

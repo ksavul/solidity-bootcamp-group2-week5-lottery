@@ -1,13 +1,30 @@
 import React, { useState } from "react";
+import axios from "axios";
 import { Button, Typography, Box } from "@mui/material";
 
 function CloseBets() {
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
+  // Function to send a request to close bets
   const handleCloseBets = async () => {
-    // Simulate an API call to close bets
-    // Replace with actual API call
-    setTransactionHash(`0x456DEF${Math.floor(Math.random() * 1000)}`);
+    try {
+      // Send a POST request to the backend to close bets
+      const response = await axios.post("http://localhost:3001/close-bets");
+
+      // Check if the response indicates success
+      if (response.data.success) {
+        // Update the state with the received transaction hash
+        setTransactionHash(response.data.txHash);
+        setError(null); // Clear any previous error
+      } else {
+        // Handle the case where the backend response indicates an error
+        setError(response.data.error);
+      }
+    } catch (error) {
+      console.error("Error closing bets:", error);
+      setError("An error occurred while closing bets.");
+    }
   };
 
   return (
@@ -29,6 +46,12 @@ function CloseBets() {
       {transactionHash && (
         <Typography variant="h6">
           Transaction Hash: {transactionHash}
+        </Typography>
+      )}
+
+      {error && (
+        <Typography variant="h6" style={{ color: "red" }}>
+          Error: {error}
         </Typography>
       )}
     </Box>

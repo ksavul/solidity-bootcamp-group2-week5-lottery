@@ -1,30 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button, TextField, Box, Typography } from "@mui/material";
+import axios from "axios";
 
 function Withdraw() {
-  const [accountAddress, setAccountAddress] = useState<string | null>(null);
-  const [lt0Balance, setLt0Balance] = useState<number | null>(null);
-  const [ownerPoolTokens, setOwnerPoolTokens] = useState<number | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState<number | string>("");
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
 
-  // Fetch account and pool data when the component mounts
-  useEffect(() => {
-    fetchAccountAndPoolData();
-  }, []);
-
-  const fetchAccountAndPoolData = async () => {
-    // Simulate fetching data here
-    setAccountAddress("0x123ABC");
-    setLt0Balance(500);
-    setOwnerPoolTokens(2000);
-  };
-
   const handleWithdraw = async () => {
-    // Simulate an API call to execute the withdrawal and return a transaction hash
-    // Replace this with your actual API call
-    const fakeTransactionHash = "0x789XYZ";
-    setTransactionHash(fakeTransactionHash);
+    try {
+      // Send a POST request to the /withdraw endpoint with the entered amount
+      const response = await axios.post("http://localhost:3001/withdraw", {
+        amount: Number(withdrawAmount), // Convert withdrawAmount to a number
+      });
+
+      // Handle the response from your backend here
+      const transactionHash = response.data.transactionHash; // Adjust this based on your backend response
+      setTransactionHash(transactionHash);
+    } catch (error) {
+      // Handle errors here
+      console.error("Withdrawal failed:", error);
+    }
   };
 
   return (
@@ -37,39 +32,17 @@ function Withdraw() {
     >
       <Typography variant="h4">Withdraw</Typography>
 
-      {lt0Balance !== null && (
-        <>
-          <TextField
-            fullWidth
-            label="Withdraw how many tokens?"
-            variant="outlined"
-            type="number"
-            value={withdrawAmount}
-            onChange={(e) => setWithdrawAmount(e.target.value)}
-            InputProps={{
-              endAdornment: (
-                <Button onClick={() => setWithdrawAmount(lt0Balance || "")}>
-                  Max
-                </Button>
-              ),
-            }}
-          />
-          <Button variant="contained" color="primary" onClick={handleWithdraw}>
-            Enter
-          </Button>
-        </>
-      )}
-
-      {accountAddress && lt0Balance !== null && ownerPoolTokens !== null && (
-        <>
-          <Typography variant="h6">
-            The account of address {accountAddress} has {lt0Balance} LT0
-          </Typography>
-          <Typography variant="h6">
-            The owner pool has {ownerPoolTokens} Tokens
-          </Typography>
-        </>
-      )}
+      <TextField
+        fullWidth
+        label="Enter the amount to withdraw"
+        variant="outlined"
+        type="number"
+        value={withdrawAmount}
+        onChange={(e) => setWithdrawAmount(e.target.value)}
+      />
+      <Button variant="contained" color="primary" onClick={handleWithdraw}>
+        Withdraw
+      </Button>
 
       {transactionHash && (
         <>

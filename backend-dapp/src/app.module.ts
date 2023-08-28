@@ -7,16 +7,20 @@ import { DataSource } from 'typeorm';
 import { VotesModule } from 'votes.module';
 
 @Module({
-  imports: [TypeOrmModule.forRoot({
-    type: 'mysql',
-    host: 'localhost',
-    port: 3306,
-    username: 'newuser',
-    password: 'password',
-    database: 'test',
-    entities: [Votes],
-    synchronize: true,
-  }), VotesModule]
+  imports: [
+    TypeOrmModule.forRoot({
+      type: 'mysql',
+      host: 'localhost',
+      port: 3306,
+      username: 'root',
+      password: 'iskratel',
+      database: 'test',
+      entities: [Votes],
+      synchronize: true,
+    }),
+    VotesModule,
+  ],
 })
 export class AppModule {
-  constructor(private dataSource: DataSource){}}
+  constructor(private dataSource: DataSource) {}
+}

@@ -1,28 +1,44 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button, TextField, Box, Typography } from "@mui/material";
+import axios from "axios";
 
 function BurnTokens() {
   const [accountIndex, setAccountIndex] = useState<number | string>("");
+  const [burnAmount, setBurnAmount] = useState<number | string>("");
   const [accountAddress, setAccountAddress] = useState<string | null>(null);
   const [lt0Balance, setLt0Balance] = useState<number | null>(null);
-  const [burnAmount, setBurnAmount] = useState<number | string>("");
   const [allowanceTxHash, setAllowanceTxHash] = useState<string | null>(null);
   const [burnTxHash, setBurnTxHash] = useState<string | null>(null);
   const [ethBalance, setEthBalance] = useState<number | null>(null);
   const [showBalances, setShowBalances] = useState(false);
 
-  const handleAccountInput = async () => {
-    // Simulate API call
-    setAccountAddress(`0x123${accountIndex}`);
-    setLt0Balance(Math.random() * 1000);
-  };
+  const handleRequest = async () => {
+    try {
+      // Send a POST request to the /burn-tokens endpoint with the entered index and amount
+      const response = await axios.post("http://localhost:3001/burn-tokens", {
+        index: Number(accountIndex),
+        amount: burnAmount,
+      });
 
-  const handleBurnTokens = async () => {
-    // Simulate API calls
-    setAllowanceTxHash("0x123ABC");
-    setBurnTxHash("0x456DEF");
-    setEthBalance(Math.random() * 5);
-    setShowBalances(true);
+      // Handle the response from your backend here
+      const {
+        accountAddress,
+        lt0Balance,
+        allowanceTxHash,
+        burnTxHash,
+        ethBalance,
+      } = response.data;
+
+      setAccountAddress(accountAddress);
+      setLt0Balance(lt0Balance);
+      setAllowanceTxHash(allowanceTxHash);
+      setBurnTxHash(burnTxHash);
+      setEthBalance(ethBalance);
+      setShowBalances(true);
+    } catch (error) {
+      // Handle errors here
+      console.error("Request failed:", error);
+    }
   };
 
   return (
@@ -34,16 +50,27 @@ function BurnTokens() {
       alignItems="center"
     >
       <Typography variant="h4">Burn Tokens</Typography>
+
       <TextField
         fullWidth
-        label="What account (index) to use?"
+        label="Account Index (Number)"
         variant="outlined"
         type="number"
         value={accountIndex}
         onChange={(e) => setAccountIndex(e.target.value)}
       />
-      <Button variant="contained" color="primary" onClick={handleAccountInput}>
-        Enter
+
+      <TextField
+        fullWidth
+        label="Burn Amount (String)"
+        variant="outlined"
+        type="text"
+        value={burnAmount}
+        onChange={(e) => setBurnAmount(e.target.value)}
+      />
+
+      <Button variant="contained" color="primary" onClick={handleRequest}>
+        Send Request
       </Button>
 
       {accountAddress && lt0Balance !== null && (
@@ -52,55 +79,26 @@ function BurnTokens() {
         </Typography>
       )}
 
-      {lt0Balance !== null && (
+      {allowanceTxHash && (
         <>
-          <TextField
-            fullWidth
-            label="Burn how many tokens?"
-            variant="outlined"
-            type="number"
-            value={burnAmount}
-            onChange={(e) => setBurnAmount(e.target.value)}
-            InputProps={{
-              endAdornment: (
-                <Button onClick={() => setBurnAmount(lt0Balance || "")}>
-                  Max
-                </Button>
-              ),
-            }}
-          />
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleBurnTokens}
-          >
-            Enter
-          </Button>
+          <Typography variant="h6" align="center">
+            Allowance confirmed
+          </Typography>
+          <Typography variant="h6" align="center">
+            Transaction Hash: {allowanceTxHash}
+          </Typography>
         </>
       )}
 
-      {allowanceTxHash && (
-        <Typography variant="h6" align="center">
-          Allowance confirmed
-        </Typography>
-      )}
-
-      {allowanceTxHash && (
-        <Typography variant="h6" align="center">
-          Transaction Hash: {allowanceTxHash}
-        </Typography>
-      )}
-
       {burnTxHash && (
-        <Typography variant="h6" align="center">
-          Burn confirmed
-        </Typography>
-      )}
-
-      {burnTxHash && (
-        <Typography variant="h6" align="center">
-          Transaction Hash: {burnTxHash}
-        </Typography>
+        <>
+          <Typography variant="h6" align="center">
+            Burn confirmed
+          </Typography>
+          <Typography variant="h6" align="center">
+            Transaction Hash: {burnTxHash}
+          </Typography>
+        </>
       )}
 
       {showBalances && ethBalance !== null && (

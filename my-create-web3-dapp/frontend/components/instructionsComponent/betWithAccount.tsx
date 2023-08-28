@@ -1,25 +1,40 @@
 import React, { useState } from "react";
 import { Button, TextField, Typography, Box } from "@mui/material";
+import Axios from "axios"; // Import Axios for making HTTP requests
 
 function BetWithAccount() {
   const [accountIndex, setAccountIndex] = useState<number | null>(null);
-  const [accountAddress, setAccountAddress] = useState<string | null>(null);
-  const [lt0Balance, setLt0Balance] = useState<number | null>(null);
   const [betTimes, setBetTimes] = useState<number | null>(null);
-  const [betEntered, setBetEntered] = useState(false); // New state variable
-
-  const handleAccountInput = async () => {
-    // Simulate API call to get account address and LT0 balance based on account index
-    // Replace with actual API call
-    setAccountAddress(`0x123${accountIndex}`);
-    setLt0Balance(Math.random() * 1000);
-  };
+  const [betEntered, setBetEntered] = useState(false);
+  const [backendResponse, setBackendResponse] = useState<any | null>(null);
 
   const handleBetInput = async () => {
-    // Simulate API call to place bets
-    // Replace with actual API call
-    console.log(`Placed ${betTimes} bets with account ${accountAddress}`);
-    setBetEntered(true); // Set the state variable to true when this button is pressed
+    if (!accountIndex || !betTimes) {
+      console.error("Account index and bet times are required.");
+      return;
+    }
+
+    try {
+      // Send a POST request to http://localhost:3001/bet
+      const response = await Axios.post("http://localhost:3001/bet", {
+        index: accountIndex,
+        times: betTimes,
+      });
+
+      // Check if the response is successful
+      if (response.status === 200) {
+        // Display the response data
+        console.log("Backend Response:", response.data);
+
+        // Set the backend response and the state variable to true
+        setBackendResponse(response.data);
+        setBetEntered(true);
+      } else {
+        console.error("Backend request failed.");
+      }
+    } catch (error) {
+      console.error("Error sending request to the backend:", error);
+    }
   };
 
   return (
@@ -39,16 +54,6 @@ function BetWithAccount() {
         type="number"
         onChange={(e) => setAccountIndex(Number(e.target.value))}
       />
-      <Button variant="contained" color="primary" onClick={handleAccountInput}>
-        Enter
-      </Button>
-
-      {accountAddress && lt0Balance !== null && (
-        <Typography variant="h6">
-          The account of address {accountAddress} has {lt0Balance} LT0
-        </Typography>
-      )}
-
       <TextField
         fullWidth
         label="Bet how many times"
@@ -60,19 +65,11 @@ function BetWithAccount() {
         Enter
       </Button>
 
-      {betEntered && ( // Check the state variable
-        <>
-          <Typography variant="h6">Bets placed: {betTimes}</Typography>
-          <Typography variant="h6">
-            LT0 Balance: {lt0Balance ? lt0Balance : "Query"}
-          </Typography>
-          {accountAddress && lt0Balance !== null && (
-            <Typography variant="h6">
-              Account status: The account of address {accountAddress} has{" "}
-              {lt0Balance} LT0
-            </Typography>
-          )}
-        </>
+      {betEntered && backendResponse && (
+        <div>
+          <Typography variant="h6">Backend Response:</Typography>
+          <pre>{JSON.stringify(backendResponse, null, 2)}</pre>
+        </div>
       )}
     </Box>
   );
