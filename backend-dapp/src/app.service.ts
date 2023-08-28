@@ -1,26 +1,37 @@
 import { Injectable } from '@nestjs/common';
 import { ethers } from 'ethers';
 import * as tokenJson from './assets/artifacts.json'
+import * as lotteryJson from './assets/lotteryArtifacts.json'
+import * as lotteryTokenJson from './assets/lotteryTokenArtifacts.json'
 import { Votes as VotesEntity } from "./entity/votes.entity"
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { VotesDto } from './dto/votes.dto';
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+
 
 const TOKEN_ADDRESS = "0x10a91764a9d6376c545d9be403c47a458a9c9e03";
-//const TOKEN_ADDRESS = "0xaDE10B93E0219eAed765De809c68EA2418DdB1d1";
+const LOTTERY_ADDRESS = "0x66eF3e40B5c0297eeBda8ABc63B1305093c24561";
+const LOTTERY_TOKEN_ADDRESS = "0x24F72AD26182100790D3eeea45F85DC4930ADC1B";
 
 @Injectable()
 export class AppService {
   provider: ethers.Provider;
   wallet: ethers.Wallet;
   contract: ethers.Contract;
+  lotteryContract: ethers.Contract;
+  tokenLotteryContract: ethers.Contract;
+  accounts: HardhatEthersSigner[];
 
   constructor(
     @InjectRepository(VotesEntity)
   private votesRepository: Repository<VotesEntity>) {    
     this.provider = new ethers.JsonRpcProvider(`https://eth-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`)
     this.wallet = new ethers.Wallet(process.env.PRIVATE_KEY ?? "", this.provider);
+   // this.accounts = ethers.Wallet.fromPhrase(process.env.MNEMONIC);
     this.contract = new ethers.Contract(TOKEN_ADDRESS, tokenJson.abi, this.wallet );
+    this.lotteryContract = new ethers.Contract(LOTTERY_ADDRESS, lotteryJson.abi, this.wallet );
+    this.tokenLotteryContract = new ethers.Contract(LOTTERY_TOKEN_ADDRESS, lotteryTokenJson.abi, this.wallet );
   }
 
   getTokenAddress(): any {
@@ -50,4 +61,119 @@ export class AppService {
   getAllVotes(): Promise<VotesEntity[]> {
     return this.votesRepository.find();
   }
+
+  //Lottery App
+  checkState(): Promise<boolean> {
+    return this.lotteryContract.betsOpen();
+  }
+
+  async openBets(): Promise<any> {
+    const currentBlock = await this.provider.getBlock("latest");
+    const timestamp = currentBlock?.timestamp ?? 0;
+
+    const tx = await this.lotteryContract.openBets(timestamp + 1800);
+    const receipt = await tx.wait();
+
+    return {success: true, txHash: receipt.hash }
+  }
+
+  async checkEthBalance(index: number): Promise<string> {
+    console.log(this.accounts);
+    //const address = this.accounts[index].address;
+    const address = this.wallet.address;
+    const balance = await this.provider.getBalance(address);
+    return ethers.formatEther(balance);
+  } 
+
+  async buyTokens(index: number, amount: string): Promise<any> {
+    //const address = this.accounts[index].address;
+    const address = this.wallet.address;
+
+    const tx = await this.lotteryContract.purchaseTokens({value: ethers.parseEther(amount)});
+    await tx.wait();
+
+    const ethBalance = await this.provider.getBalance(address);
+    const eth = ethers.formatEther(ethBalance);
+
+    const tokenBalance = await this.tokenLotteryContract.balanceOf(address);
+    return {ethBalance: eth, tokensBalance: tokenBalance.toString()};
+    
+
+  }
+  
+
+  async checkTokenBalance(index: number) {
+    //const address = this.accounts[index].address;
+    const address = this.wallet.address;
+    return await this.tokenLotteryContract.balanceOf(address);
+  }
+
+  async bet(index: number, times: bigint): Promise<any> {
+    //const address = this.accounts[index].address;
+    const address = this.wallet.address;
+
+    const allowance = await this.tokenLotteryContract.approve(LOTTERY_ADDRESS, ethers.MaxUint256);
+    const allowanceReceipt = await allowance.wait();
+
+    const tx = await this.lotteryContract.betMany(times);
+    await tx.wait();
+
+    const ethBalance = await this.provider.getBalance(address);
+    const eth = ethers.formatEther(ethBalance);
+
+    const tokenBalance = await this.tokenLotteryContract.balanceOf(address);
+    return {ethBalance: eth, tokensBalance: tokenBalance.toString()};
+    
+
+  }
+
+  async closeBets(): Promise<any> {
+    const tx = await this.lotteryContract.closeLottery();
+    const receipt = await tx.wait();
+
+    return {success: true, txHash: receipt.hash }
+  }
+
+  async checkPlayerPrize(index: number): Promise<bigint> {
+    //const address = this.accounts[index].address;
+    const address = this.wallet.address;
+    return await this.lotteryContract.prize(address);
+
+  }
+
+  async claimPrize(index: number): Promise<any> {
+    //const address = this.accounts[index].address;
+    const address = this.wallet.address;
+    const prize = await this.lotteryContract.prize(address);
+    const tx = await this.lotteryContract.prizeWithdraw(prize);
+    await tx.wait();
+
+    return {success: true, withdraw: prize.toString() }
+  }
+
+  async withdraw(amount: bigint): Promise<any> {
+    const tx = await this.lotteryContract.ownerWithdraw(amount);
+    const receipt = await tx.wait();
+
+    return {success: true, txHash: receipt.hash, amount: amount}
+  }
+
+  async burnTokens(index: number, amount:bigint): Promise<any>{
+    //const address = this.accounts[index].address;
+    const address = this.wallet.address;
+    const allowance = await this.tokenLotteryContract.approve(LOTTERY_ADDRESS, amount);
+    const allowanceReceipt = await allowance.wait();
+
+    const tx = await this.lotteryContract.returnTokens(amount);
+    const burnReceipt = await tx.wait();
+
+    const balance = await this.provider.getBalance(address);
+    const ethBalance = ethers.formatEther(balance);
+
+    const tokenBalance = await this.tokenLotteryContract.balanceOf(address);
+
+    return {success: true, allowanceHash: allowanceReceipt.hash, burnHash: burnReceipt.hash, ethBalance: ethBalance, tokenBalance: tokenBalance.toString()}
+  }
+
+
 }
